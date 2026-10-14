@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Новый студент{% endblock %}
+{% block content %}
+<div class="card narrow">
+  <h1>Новый студент и договор</h1>
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label>ФИО <input name="full_name" value="{{ form.get('full_name', '') }}" required maxlength="200"></label>
+    <label>Группа <input name="group_name" value="{{ form.get('group_name', '') }}" required maxlength="50"></label>
+    <label>Номер договора <input name="contract_number" value="{{ form.get('contract_number', '') }}" required maxlength="50"></label>
+    <label>Стоимость обучения за год, ₽ <input name="total_cost" value="{{ form.get('total_cost', '') }}" required inputmode="decimal" placeholder="180000"></label>
+    <label>Количество платежей
+      <select name="parts">
+        {% for n in (1, 2, 4) %}
+          <option value="{{ n }}" {{ 'selected' if form.get('parts', '2') == n|string }}>{{ n }} — раз в {{ 12 // n }} мес.</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Дата первого платежа <input type="date" name="first_due" value="{{ form.get('first_due', '') }}" required></label>
+    <button>Создать</button>
+  </form>
+</div>
+{% endblock %}

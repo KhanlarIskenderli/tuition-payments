@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Отчёт{% endblock %}
+{% block content %}
+<h1>Сводный отчёт на {{ today.strftime('%d.%m.%Y') }}</h1>
+<div class="tiles">
+  <div class="tile"><span>Договоров</span><b>{{ count }}</b></div>
+  <div class="tile"><span>Сумма договоров</span><b>{{ totals.total_cost|money }}</b></div>
+  <div class="tile"><span>Поступило</span><b>{{ totals.paid|money }}</b></div>
+  <div class="tile"><span>Остаток</span><b>{{ totals.debt|money }}</b></div>
+  <div class="tile {{ 'bad' if totals.overdue }}"><span>Просрочено</span><b>{{ totals.overdue|money }}</b></div>
+  <div class="tile {{ 'bad' if totals.penalty }}"><span>Пени</span><b>{{ totals.penalty|money }}</b></div>
+</div>
+
+<h2>Должники</h2>
+{% if debtors %}
+<div class="table-scroll">
+<table>
+  <thead><tr><th>ФИО</th><th>Группа</th><th>Договор</th><th class="num">Просрочено</th><th class="num">Пени</th></tr></thead>
+  <tbody>
+  {% for student, statuses, s in debtors %}
+    <tr>
+      <td><a href="{{ url_for('views.student', student_id=student['id']) }}">{{ student['full_name'] }}</a></td>
+      <td>{{ student['group_name'] }}</td><td>{{ student['contract_number'] }}</td>
+      <td class="num">{{ s.overdue|money }}</td><td class="num">{{ s.penalty|money }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="muted">Просроченной задолженности нет.</p>
+{% endif %}
+{% endblock %}

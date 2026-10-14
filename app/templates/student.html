@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}{{ student['full_name'] }}{% endblock %}
+{% block content %}
+<h1>{{ student['full_name'] }}</h1>
+<p class="muted">Группа {{ student['group_name'] }} · Договор № {{ student['contract_number'] }}</p>
+
+<div class="tiles">
+  <div class="tile"><span>Стоимость</span><b>{{ summary.total_cost|money }}</b></div>
+  <div class="tile"><span>Оплачено</span><b>{{ summary.paid|money }}</b></div>
+  <div class="tile"><span>Остаток</span><b>{{ summary.debt|money }}</b></div>
+  <div class="tile {{ 'bad' if summary.overdue }}"><span>Просрочено</span><b>{{ summary.overdue|money }}</b></div>
+  <div class="tile {{ 'bad' if summary.penalty }}"><span>Пени</span><b>{{ summary.penalty|money }}</b></div>
+</div>
+
+<h2>График платежей</h2>
+<div class="table-scroll">
+<table>
+  <thead><tr><th>№</th><th>Срок</th><th class="num">Сумма</th><th class="num">Оплачено</th>
+             <th>Статус</th><th class="num">Дней просрочки</th><th class="num">Пени</th></tr></thead>
+  <tbody>
+  {% for s in statuses %}
+    <tr>
+      <td>{{ s.number }}</td>
+      <td>{{ s.due_date.strftime('%d.%m.%Y') }}</td>
+      <td class="num">{{ s.amount|money }}</td>
+      <td class="num">{{ s.paid|money }}</td>
+      <td><span class="badge {{ {'Оплачен': 'ok', 'Просрочен': 'bad', 'Оплачен частично': 'warn'}.get(s.status, '') }}">{{ s.status }}</span></td>
+      <td class="num">{{ s.overdue_days or '—' }}</td>
+      <td class="num">{{ s.penalty|money if s.penalty else '—' }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<div class="cols">
+  <section class="card">
+    <h2>Зарегистрировать оплату</h2>
+    {% if summary.debt > 0 %}
+    <form method="post" action="{{ url_for('views.add_payment', student_id=student['id']) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label>Сумма, ₽ <input name="amount" required inputmode="decimal" placeholder="{{ (summary.next_due.unpaid / 100)|int if summary.next_due }}"></label>
+      <label>Дата оплаты <input type="date" name="paid_on" value="{{ today }}" max="{{ today }}" required></label>
+      <label>Способ
+        <select name="method">{% for m in methods %}<option>{{ m }}</option>{% endfor %}</select>
+      </label>
+      <label>Комментарий <input name="comment" maxlength="500"></label>
+      <button>Провести оплату</button>
+    </form>
+    {% else %}
+    <p class="muted">Договор оплачен полностью.</p>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>История операций</h2>
+    {% if payments %}
+    <table>
+      <thead><tr><th>Дата</th><th class="num">Сумма</th><th>Способ</th><th>Провёл</th></tr></thead>
+      <tbody>
+      {% for p in payments %}
+        <tr title="{{ p['comment'] or '' }}">
+          <td>{{ p['paid_on'] }}</td><td class="num">{{ p['amount']|money }}</td>
+          <td>{{ p['method'] }}</td><td>{{ p['username'] or '—' }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="muted">Оплат пока нет.</p>
+    {% endif %}
+  </section>
+</div>
+<p class="small muted">JSON: <a href="{{ url_for('views.api_summary', student_id=student['id']) }}">/api/students/{{ student['id'] }}/summary</a></p>
+{% endblock %}

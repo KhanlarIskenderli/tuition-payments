@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row-between">
+  <h1>Студенты</h1>
+  <form method="get" class="search">
+    <input name="q" value="{{ q }}" placeholder="ФИО, группа или номер договора">
+    <button>Найти</button>
+  </form>
+</div>
+{% if rows %}
+<div class="table-scroll">
+<table>
+  <thead>
+    <tr><th>ФИО</th><th>Группа</th><th>Договор</th><th class="num">Оплачено</th>
+        <th class="num">Остаток</th><th class="num">Просрочено</th><th>Ближайший платёж</th></tr>
+  </thead>
+  <tbody>
+  {% for student, statuses, s in rows %}
+    <tr class="{{ 'bad' if s.overdue else '' }}">
+      <td><a href="{{ url_for('views.student', student_id=student['id']) }}">{{ student['full_name'] }}</a></td>
+      <td>{{ student['group_name'] }}</td>
+      <td>{{ student['contract_number'] }}</td>
+      <td class="num">{{ s.paid|money }}</td>
+      <td class="num">{{ s.debt|money }}</td>
+      <td class="num">{{ s.overdue|money if s.overdue else '—' }}</td>
+      <td>{% if s.next_due %}{{ s.next_due.due_date.strftime('%d.%m.%Y') }} — {{ s.next_due.unpaid|money }}{% else %}Оплачено полностью{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="muted">Студенты не найдены. <a href="{{ url_for('views.new_student') }}">Добавить студента</a></p>
+{% endif %}
+{% endblock %}
